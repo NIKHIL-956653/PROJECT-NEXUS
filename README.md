@@ -1,1 +1,2 @@
 # PROJECT-NEXUS
+Project Nexus is a voice-first project log that runs entirely in the browser. Lock a project, hit the mic, and speak — the transcript commits as a timestamped entry with its recognition confidence. A searchable timeline covers every project, deletes come with a five-second undo, and projects left untouched for three days raise an alert. Built as an installable PWA with no framework and no backend: vanilla JS, CSS3 animations, the Web Speech API for capture, a service worker for the offline shell, and localStorage for all data.
