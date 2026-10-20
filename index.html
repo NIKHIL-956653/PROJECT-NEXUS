@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Project Nexus</title>
+<meta name="description" content="Voice-first project log. Speak a note, it files itself to the right project and stays on your device.">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="color-scheme" content="dark">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NEXUS">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon-64.png" sizes="64x64" type="image/png">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Standalone only: the hosted-artifact shell supplies these insets itself. */
+  :root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+  img{max-width:100%}
+  [hidden]{display:none!important}
+</style>
+<script>window.NEXUS_ENV='standalone';</script>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+
+<div id="shell">
+  <header class="topbar panel">
+    <div class="brand">
+      <svg class="sigil" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <polygon points="20,3 34,11 34,29 20,37 6,29 6,11" stroke="currentColor" stroke-width="1.6" fill="rgba(0,212,255,.08)" style="color:#00d4ff"/>
+        <g class="spin" style="color:#00d4ff">
+          <circle cx="20" cy="20" r="9" stroke="currentColor" stroke-width="1.1" stroke-dasharray="5 4" opacity=".8"/>
+        </g>
+        <circle cx="20" cy="20" r="3.4" fill="#00d4ff"/>
+      </svg>
+      <span class="brandtext"><b>NEXUS</b><i id="linkword">ONLINE</i></span>
+      <span class="pulsedot" id="pulsedot" title="System heartbeat"></span>
+    </div>
+
+    <div class="readout" id="readout">
+      <span class="rd"><i>LINK</i><b id="rd-link">—</b></span>
+      <span class="rd"><i>CACHE</i><b id="rd-cache">—</b></span>
+      <span class="rd"><i>VOICE</i><b id="rd-voice">—</b></span>
+      <span class="rd"><i>ENTRIES</i><b id="rd-count">0</b></span>
+      <span class="rd"><i>LOCAL</i><b id="rd-clock">--:--:--</b></span>
+    </div>
+
+    <div class="topacts">
+      <button id="btn-sound" class="icobtn" aria-pressed="true" title="Alert tones">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      </button>
+      <button id="btn-notify" class="icobtn" aria-pressed="false" title="System notifications">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      </button>
+      <button id="btn-install" class="ghostbtn" hidden>INSTALL</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- ROSTER ---------------------------------------------------------- -->
+    <section class="panel pane on" id="pane-roster" data-pane="roster" aria-label="Projects">
+      <div class="phead">
+        <h2>PROJECTS<small id="roster-count">0 ACTIVE</small></h2>
+        <button id="btn-newproj" class="minibtn">+ NEW</button>
+      </div>
+      <form class="newproj" id="newproj" hidden autocomplete="off">
+        <input id="newproj-name" maxlength="42" placeholder="DESIGNATION" aria-label="New project name">
+        <button class="minibtn" type="submit">ADD</button>
+      </form>
+      <div class="scroll"><div class="rosterlist" id="rosterlist"></div></div>
+      <div class="railfoot">
+        <div class="hint"><kbd>Alt</kbd>+<kbd>M</kbd> mic · <kbd>/</kbd> search · <kbd>Ctrl</kbd>+<kbd>↵</kbd> log</div>
+      </div>
+    </section>
+
+    <!-- CONSOLE --------------------------------------------------------- -->
+    <section class="panel pane" id="pane-console" data-pane="console" aria-label="Project console">
+      <div class="phead">
+        <h2>CONSOLE<small id="console-code">NO PROJECT SELECTED</small></h2>
+        <span class="rd"><i>CAPTURE</i><b id="rd-capture">IDLE</b></span>
+      </div>
+
+      <div class="empty" id="console-empty">
+        <div class="inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="12 2 21 7 21 17 12 22 3 17 3 7"/><path d="M12 22V12M3 7l9 5 9-5"/></svg>
+          <h3>CONSOLE STANDING BY</h3>
+          <p>Every note you speak or type lands here, with its own activity trace.</p>
+          <button id="btn-first" class="primary" type="button">CREATE YOUR FIRST PROJECT</button>
+        </div>
+      </div>
+
+      <div class="scroll" id="console-scroll" hidden>
+        <div class="consolebody">
+          <div class="c-title">
+            <div>
+              <h1 id="c-name">—</h1>
+              <div class="c-sub" id="c-sub"></div>
+            </div>
+            <div class="headacts">
+              <button id="btn-rename" class="minibtn">RENAME</button>
+              <button id="btn-delproj" class="minibtn danger">DELETE</button>
+            </div>
+          </div>
+
+          <div class="stats" id="c-stats"></div>
+
+          <div class="sparkwrap">
+            <div class="sparkhead"><span>ACTIVITY · 14 DAYS</span><span id="spark-max">PEAK 0</span></div>
+            <div class="spark" id="spark"></div>
+          </div>
+
+          <div class="capture">
+            <div class="caphead">CAPTURE TARGET → <b id="cap-target">—</b><select id="lang" aria-label="Recognition language" title="Speech recognition language"><option value="en-US">EN-US</option><option value="en-GB">EN-GB</option><option value="en-IN">EN-IN</option><option value="hi-IN">HI-IN</option><option value="es-ES">ES-ES</option><option value="de-DE">DE-DE</option><option value="fr-FR">FR-FR</option></select></div>
+            <div class="capbody">
+              <div class="miczone">
+                <button id="mic" class="mic" title="Start voice capture (Alt+M)" aria-label="Start voice capture">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><path d="M12 17v5M8 22h8"/></svg>
+                </button>
+                <div class="micmeta">
+                  <div class="micstate" id="micstate">READY</div>
+                  <div class="wave" id="wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                  <div class="conf">
+                    <span>CONFIDENCE</span>
+                    <span class="confbar"><i id="confbar"></i></span>
+                    <span class="confval" id="confval">—</span>
+                  </div>
+                </div>
+                <button id="btn-sim" class="ghostbtn sm" title="Replay a simulated capture — no microphone used">SIMULATE</button>
+              </div>
+
+              <div class="interim" id="interim"></div>
+              <textarea id="buffer" placeholder="Speak, or type an entry. Voice transcript commits when you stop listening."></textarea>
+
+              <div class="caprow">
+                <label class="chk"><input type="checkbox" id="autoclean"><span>Auto-delete entries after 10 days</span></label>
+                <div class="capbtns">
+                  <button id="btn-clear" class="ghostbtn sm">CLEAR</button>
+                  <button id="btn-log" class="primary">LOG ENTRY</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="recent">
+            <h3>RECENT IN PROJECT</h3>
+            <div id="recentlist"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORY --------------------------------------------------------- -->
+    <section class="panel pane" id="pane-log" data-pane="log" aria-label="History">
+      <div class="phead">
+        <h2>HISTORY<small id="log-count">0 ENTRIES</small></h2>
+        <button id="btn-select" class="minibtn">SELECT</button>
+      </div>
+      <div class="filters">
+        <div class="searchwrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" placeholder="SEARCH TRANSCRIPTS" aria-label="Search history">
+        </div>
+        <div class="frow">
+          <select id="fproj" aria-label="Filter by project"><option value="">ALL PROJECTS</option></select>
+          <label class="toggle"><input type="checkbox" id="fvoice"><span>VOICE ONLY</span></label>
+        </div>
+      </div>
+      <div class="bulkbar" id="bulkbar" hidden>
+        <span id="bulkcount">0 SELECTED</span>
+        <button id="btn-selall" class="minibtn">ALL VISIBLE</button>
+        <button id="btn-bulkdel" class="minibtn danger">DELETE</button>
+        <button id="btn-selcancel" class="minibtn">CANCEL</button>
+      </div>
+      <div class="scroll"><div class="timeline" id="timeline"></div></div>
+    </section>
+  </main>
+
+  <nav class="bottombar" id="bottombar" aria-label="Panels">
+    <button data-go="roster" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>PROJECTS</button>
+    <button data-go="console"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg>CONSOLE</button>
+    <button data-go="log"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 7v5l3 2"/><circle cx="12" cy="12" r="9"/></svg>HISTORY<span class="badge" id="nav-badge" hidden>0</span></button>
+  </nav>
+</div>
+
+<div class="popups" id="popups" aria-live="polite"></div>
+<div class="toast" id="toast" hidden></div>
+<div class="ctxmenu" id="ctxmenu" hidden></div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
